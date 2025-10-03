@@ -1,0 +1,418 @@
+export const SWAGGER_UI_HTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product Service API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui.css" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin:0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.10.3/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: window.location.origin + window.location.pathname.replace('/docs', '/swagger.json'),
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        validatorUrl: null,
+        tryItOutEnabled: true,
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+        onComplete: function() {
+          console.log('Swagger UI loaded successfully');
+        },
+        onFailure: function(error) {
+          console.error('Failed to load Swagger UI:', error);
+        }
+      });
+    };
+  </script>
+</body>
+</html>
+`;
+
+export const swaggerSpec = {
+  openapi: "3.0.3",
+  info: {
+    title: "Product Service API",
+    description:
+      "API for product service operations including retrieving products list and individual products by ID",
+    version: "1.0.0",
+    contact: {
+      name: "Product Service Team",
+      email: "support@productservice.com",
+    },
+    license: {
+      name: "MIT",
+      url: "https://opensource.org/licenses/MIT",
+    },
+  },
+  servers: [
+    {
+      url: "https://api.productservice.com/prod",
+      description: "Production server",
+    },
+    {
+      url: "https://api.productservice.com/dev",
+      description: "Development server",
+    },
+  ],
+  paths: {
+    "/products": {
+      get: {
+        summary: "Get all products",
+        description: "Retrieves a list of all available products",
+        operationId: "getProductsList",
+        tags: ["Products"],
+        responses: {
+          "200": {
+            description: "Successfully retrieved products list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    $ref: "#/components/schemas/Product",
+                  },
+                },
+                example: [
+                  {
+                    id: "1",
+                    title: "iPhone 15",
+                    description: "Latest iPhone with advanced features",
+                    price: 999.99,
+                    count: 50,
+                  },
+                  {
+                    id: "2",
+                    title: "Samsung Galaxy S24",
+                    description: "High-performance Android smartphone",
+                    price: 899.99,
+                    count: 30,
+                  },
+                ],
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+                example: {
+                  message: "Internal server error",
+                },
+              },
+            },
+          },
+        },
+      },
+      options: {
+        summary: "CORS preflight for products",
+        description: "Handle CORS preflight requests for the products endpoint",
+        operationId: "optionsProducts",
+        tags: ["CORS"],
+        responses: {
+          "200": {
+            description: "CORS preflight response",
+            headers: {
+              "Access-Control-Allow-Origin": {
+                schema: {
+                  type: "string",
+                },
+                example: "*",
+              },
+              "Access-Control-Allow-Methods": {
+                schema: {
+                  type: "string",
+                },
+                example: "GET, OPTIONS",
+              },
+              "Access-Control-Allow-Headers": {
+                schema: {
+                  type: "string",
+                },
+                example: "Content-Type, Authorization",
+              },
+            },
+          },
+        },
+      },
+    },
+    "/products/{productId}": {
+      get: {
+        summary: "Get product by ID",
+        description: "Retrieves a specific product by its unique identifier",
+        operationId: "getProductById",
+        tags: ["Products"],
+        parameters: [
+          {
+            name: "productId",
+            in: "path",
+            required: true,
+            description: "Unique identifier of the product",
+            schema: {
+              type: "string",
+              pattern: "^[a-zA-Z0-9-_]+$",
+              minLength: 1,
+              maxLength: 50,
+            },
+            example: "1",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Successfully retrieved product",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Product",
+                },
+                example: {
+                  id: "1",
+                  title: "iPhone 15",
+                  description: "Latest iPhone with advanced features",
+                  price: 999.99,
+                  count: 50,
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid product ID",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+                example: {
+                  message: "Product ID is required",
+                },
+              },
+            },
+          },
+          "404": {
+            description: "Product not found",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+                example: {
+                  message: "Product not found",
+                },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/Error",
+                },
+                example: {
+                  message: "Internal server error",
+                },
+              },
+            },
+          },
+        },
+      },
+      options: {
+        summary: "CORS preflight for product by ID",
+        description:
+          "Handle CORS preflight requests for the product by ID endpoint",
+        operationId: "optionsProductById",
+        tags: ["CORS"],
+        parameters: [
+          {
+            name: "productId",
+            in: "path",
+            required: true,
+            description: "Unique identifier of the product",
+            schema: {
+              type: "string",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "CORS preflight response",
+            headers: {
+              "Access-Control-Allow-Origin": {
+                schema: {
+                  type: "string",
+                },
+                example: "*",
+              },
+              "Access-Control-Allow-Methods": {
+                schema: {
+                  type: "string",
+                },
+                example: "GET, OPTIONS",
+              },
+              "Access-Control-Allow-Headers": {
+                schema: {
+                  type: "string",
+                },
+                example: "Content-Type, Authorization",
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  components: {
+    schemas: {
+      Product: {
+        type: "object",
+        required: ["id", "title", "description", "price", "count"],
+        properties: {
+          id: {
+            type: "string",
+            description: "Unique identifier for the product",
+            example: "1",
+            pattern: "^[a-zA-Z0-9-_]+$",
+            minLength: 1,
+            maxLength: 50,
+          },
+          title: {
+            type: "string",
+            description: "Product title or name",
+            example: "iPhone 15",
+            minLength: 1,
+            maxLength: 255,
+          },
+          description: {
+            type: "string",
+            description: "Detailed description of the product",
+            example: "Latest iPhone with advanced features",
+            minLength: 1,
+            maxLength: 1000,
+          },
+          price: {
+            type: "number",
+            format: "double",
+            description: "Product price in USD",
+            example: 999.99,
+            minimum: 0,
+            maximum: 999999.99,
+          },
+          count: {
+            type: "integer",
+            format: "int32",
+            description: "Available quantity of the product",
+            example: 50,
+            minimum: 0,
+            maximum: 999999,
+          },
+        },
+        additionalProperties: false,
+      },
+      Error: {
+        type: "object",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            description: "Error message describing what went wrong",
+            example: "Product not found",
+          },
+          code: {
+            type: "string",
+            description: "Error code for programmatic handling",
+            example: "PRODUCT_NOT_FOUND",
+          },
+          details: {
+            type: "object",
+            description: "Additional error details",
+            additionalProperties: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+    responses: {
+      BadRequest: {
+        description: "Bad request - invalid input parameters",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/Error",
+            },
+          },
+        },
+      },
+      NotFound: {
+        description: "Resource not found",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/Error",
+            },
+          },
+        },
+      },
+      InternalServerError: {
+        description: "Internal server error",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/Error",
+            },
+          },
+        },
+      },
+    },
+    parameters: {
+      ProductId: {
+        name: "productId",
+        in: "path",
+        required: true,
+        description: "Unique identifier of the product",
+        schema: {
+          type: "string",
+          pattern: "^[a-zA-Z0-9-_]+$",
+          minLength: 1,
+          maxLength: 50,
+        },
+      },
+    },
+  },
+  tags: [
+    {
+      name: "Products",
+      description: "Product management operations",
+    },
+    {
+      name: "CORS",
+      description: "CORS preflight handling",
+    },
+  ],
+};
