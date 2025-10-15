@@ -1,5 +1,16 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { products } from "../shared/products-data";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  GetCommand,
+} from "@aws-sdk/lib-dynamodb";
+
+const dynamoDBClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+const docClient = DynamoDBDocumentClient.from(dynamoDBClient);
+
+const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE_NAME;
+const STOCK_TABLE = process.env.STOCK_TABLE_NAME;
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -7,6 +18,23 @@ export const handler = async (
   console.log("GetProductsList event:", JSON.stringify(event, null, 2));
 
   try {
+    const productsResult = await docClient.send(
+      new ScanCommand({
+        TableName: PRODUCTS_TABLE,
+      })
+    );
+    const products = productsResult.Items || [];
+
+    for (const product of products) {
+      const stockResult = await docClient.send(
+        new GetCommand({
+          TableName: STOCK_TABLE,
+          Key: { product_id: product.id },
+        })
+      );
+
+      product.count = stockResult.Item?.count || 0;
+    }
     return {
       statusCode: 200,
       headers: {

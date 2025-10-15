@@ -1,5 +1,11 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { products } from "../shared/products-data";
+
+const dynamoDBClient = new DynamoDBClient({ region: process.env.AWS_REGION });
+const docClient = DynamoDBDocumentClient.from(dynamoDBClient);
+
+const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE_NAME;
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -20,7 +26,14 @@ export const handler = async (
       };
     }
 
-    const product = products.find((p) => p.id === productId);
+    const productResult = await docClient.send(
+      new GetCommand({
+        TableName: PRODUCTS_TABLE,
+        Key: { id: productId },
+      })
+    );
+
+    const product = productResult.Item;
 
     if (!product) {
       return {

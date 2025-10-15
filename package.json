@@ -8,7 +8,9 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "populate-db": "ts-node scripts/populate-dynamodb.ts",
+    "populate-db:batch": "ts-node scripts/populate-dynamodb.ts --batch"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -21,6 +23,9 @@
   },
   "dependencies": {
     "aws-cdk-lib": "2.214.0",
-    "constructs": "^10.0.0"
+    "constructs": "^10.0.0",
+    "@types/aws-lambda": "^8.10.145",
+    "@aws-sdk/client-dynamodb": "^3.658.1",
+    "@aws-sdk/lib-dynamodb": "^3.658.1"
   }
 }
