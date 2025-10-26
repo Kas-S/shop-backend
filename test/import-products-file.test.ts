@@ -47,7 +47,8 @@ describe("importProductsFile Lambda Handler", () => {
 
   describe("Successful scenarios", () => {
     it("should return signed URL for valid CSV file name", async () => {
-      const mockSignedUrl = "https://test-bucket.s3.amazonaws.com/uploaded/products.csv?signature=xyz";
+      const mockSignedUrl =
+        "https://test-bucket.s3.amazonaws.com/uploaded/products.csv?signature=xyz";
       const fileName = "products.csv";
 
       (getSignedUrl as jest.Mock).mockResolvedValue(mockSignedUrl);
@@ -97,8 +98,8 @@ describe("importProductsFile Lambda Handler", () => {
         expect.objectContaining({
           input: expect.objectContaining({
             ContentType: "text/csv",
-            Key: "uploaded/data.csv"
-          })
+            Key: "uploaded/data.csv",
+          }),
         }),
         { expiresIn: 3600 }
       );
@@ -117,7 +118,7 @@ describe("importProductsFile Lambda Handler", () => {
         expect.anything(),
         { expiresIn: 3600 }
       );
-      
+
       const body = JSON.parse(result.body);
       expect(body.key).toBe("uploaded/file.csv");
     });

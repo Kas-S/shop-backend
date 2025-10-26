@@ -4,11 +4,16 @@ import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as s3n from "aws-cdk-lib/aws-s3-notifications";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as path from "path";
 import { Construct } from "constructs";
 
+export interface ImportServiceStackProps extends cdk.StackProps {
+  catalogItemsQueue: sqs.Queue;
+}
+
 export class ImportServiceStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: ImportServiceStackProps) {
     super(scope, id, props);
     const bucket = new s3.Bucket(this, "products", {
       versioned: true,
@@ -49,12 +54,14 @@ export class ImportServiceStack extends cdk.Stack {
         memorySize: 256,
         code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
         environment: {
+          QUEUE_URL: props.catalogItemsQueue.queueUrl,
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
         },
       }
     );
 
     bucket.grantRead(importFileParserLambda);
+    props.catalogItemsQueue.grantSendMessages(importFileParserLambda);
 
     bucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,

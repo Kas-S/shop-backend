@@ -10,7 +10,8 @@
     "test": "jest",
     "cdk": "cdk",
     "populate-db": "ts-node scripts/populate-dynamodb.ts",
-    "populate-db:batch": "ts-node scripts/populate-dynamodb.ts --batch"
+    "populate-db:batch": "ts-node scripts/populate-dynamodb.ts --batch",
+    "send-to-queue": "ts-node scripts/send-to-queue.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -25,6 +26,8 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.658.1",
     "@aws-sdk/client-s3": "^3.917.0",
+    "@aws-sdk/client-sns": "^3.917.0",
+    "@aws-sdk/client-sqs": "^3.917.0",
     "@aws-sdk/lib-dynamodb": "^3.658.1",
     "@aws-sdk/s3-request-presigner": "^3.917.0",
     "@types/aws-lambda": "^8.10.145",
