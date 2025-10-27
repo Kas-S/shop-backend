@@ -131,9 +131,18 @@ export class ProductServiceStack extends cdk.Stack {
       topicName: "createProductTopic",
       displayName: "Product Creation Notifications",
     });
+    createProductTopic.addSubscription(
+      new sns_subscriptions.EmailSubscription("izzatsotimkulov@gmail.com")
+    );
 
     createProductTopic.addSubscription(
-      new sns_subscriptions.EmailSubscription("your-email@example.com")
+      new sns_subscriptions.EmailSubscription("sotimkul@gmail.com", {
+        filterPolicy: {
+          price: sns.SubscriptionFilter.numericFilter({
+            greaterThan: 100,
+          }),
+        },
+      })
     );
 
     const catalogBatchProcessLambda = new lambda.Function(

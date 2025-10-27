@@ -42,26 +42,34 @@ export const handler = async (event: S3Event): Promise<void> => {
       let sentCount = 0;
 
       await new Promise<void>((resolve, reject) => {
-        stream
-          .pipe(csv())
-          .on("data", async (data) => {
+        const parser = stream.pipe(csv());
+        const promises: Promise<void>[] = [];
+
+        parser
+          .on("data", (data) => {
             recordCount++;
-            try {
-              await sqsClient.send(
+            const sendPromise = sqsClient
+              .send(
                 new SendMessageCommand({
                   QueueUrl: QUEUE_URL,
                   MessageBody: JSON.stringify(data),
                 })
-              );
-              sentCount++;
-            } catch (error) {
-              console.error(
-                `Error sending record ${recordCount} to SQS:`,
-                error
-              );
-            }
+              )
+              .then(() => {
+                sentCount++;
+                console.log(`Record ${recordCount} sent to SQS successfully`);
+              })
+              .catch((error) => {
+                console.error(
+                  `Error sending record ${recordCount} to SQS:`,
+                  error
+                );
+              });
+
+            promises.push(sendPromise);
           })
-          .on("end", () => {
+          .on("end", async () => {
+            await Promise.all(promises);
             console.log(
               `Finished processing ${key}. Total records: ${recordCount}, Sent to SQS: ${sentCount}`
             );

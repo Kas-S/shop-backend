@@ -18,6 +18,20 @@ export class ImportServiceStack extends cdk.Stack {
     const bucket = new s3.Bucket(this, "products", {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      cors: [
+        {
+          allowedMethods: [
+            s3.HttpMethods.GET,
+            s3.HttpMethods.PUT,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.DELETE,
+            s3.HttpMethods.HEAD,
+          ],
+          allowedOrigins: ["*"],
+          allowedHeaders: ["*"],
+          exposedHeaders: ["ETag"],
+        },
+      ],
     });
 
     new s3deploy.BucketDeployment(this, "UploadedFolder", {

@@ -23,16 +23,54 @@ interface ProductMessage {
   count?: number;
 }
 
-function isValidProduct(data: any): data is ProductMessage {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    typeof data.title === "string" &&
-    data.title.trim().length > 0 &&
-    typeof data.description === "string" &&
-    typeof data.price === "number" &&
-    data.price > 0
-  );
+function parseProductData(data: any): ProductMessage {
+  if (typeof data !== "object" || data === null) {
+    throw new Error("Product data must be an object");
+  }
+
+  if (typeof data.title !== "string" || data.title.trim().length === 0) {
+    throw new Error("Product title must be a non-empty string");
+  }
+
+  if (typeof data.description !== "string") {
+    throw new Error("Product description must be a string");
+  }
+
+  // Parse price - handle both string and number types
+  let price: number;
+  if (typeof data.price === "number") {
+    price = data.price;
+  } else if (typeof data.price === "string") {
+    price = parseFloat(data.price);
+  } else {
+    throw new Error("Product price must be a number or numeric string");
+  }
+
+  if (isNaN(price) || price <= 0) {
+    throw new Error("Product price must be a positive number");
+  }
+
+  // Parse count - handle both string and number types
+  let count: number | undefined;
+  if (data.count !== undefined && data.count !== null && data.count !== "") {
+    if (typeof data.count === "number") {
+      count = data.count;
+    } else if (typeof data.count === "string") {
+      count = parseInt(data.count, 10);
+      if (isNaN(count) || count < 0) {
+        throw new Error("Product count must be a non-negative number");
+      }
+    } else {
+      throw new Error("Product count must be a number or numeric string");
+    }
+  }
+
+  return {
+    title: data.title.trim(),
+    description: data.description.trim(),
+    price: price,
+    count: count,
+  };
 }
 
 export const handler = async (event: SQSEvent): Promise<void> => {
@@ -58,7 +96,6 @@ export const handler = async (event: SQSEvent): Promise<void> => {
 
   console.log(`Successfully processed ${event.Records.length} messages`);
 
-  // Send SNS notification with all created products
   if (createdProducts.length > 0) {
     await sendProductCreatedNotification(createdProducts);
   }
@@ -72,21 +109,25 @@ async function processRecord(record: SQSRecord): Promise<{
 }> {
   console.log(`Processing message: ${record.messageId}`);
 
-  let productData: ProductMessage;
+  let rawData: any;
 
   try {
-    productData = JSON.parse(record.body);
+    rawData = JSON.parse(record.body);
   } catch (error) {
     console.error(`Invalid JSON in message ${record.messageId}:`, error);
     throw new Error("Invalid JSON format");
   }
 
-  if (!isValidProduct(productData)) {
+  let productData: ProductMessage;
+  try {
+    productData = parseProductData(rawData);
+  } catch (error) {
     console.error(
       `Invalid product data in message ${record.messageId}:`,
-      productData
+      rawData,
+      `Error: ${error instanceof Error ? error.message : error}`
     );
-    throw new Error("Invalid product data");
+    throw error;
   }
 
   const productId = randomUUID();
@@ -174,17 +215,35 @@ Total products created: ${products.length}
 This is an automated notification from the Product Catalog Service.
   `.trim();
 
+  // Calculate the maximum price in this batch for filtering
+  const maxPrice = Math.max(...products.map((p) => p.price));
+  const isPremiumBatch = maxPrice > 100;
+
   try {
     await snsClient.send(
       new PublishCommand({
         TopicArn: SNS_TOPIC_ARN,
         Subject: subject,
         Message: message,
+        MessageAttributes: {
+          price: {
+            DataType: "Number",
+            StringValue: maxPrice.toString(),
+          },
+          isPremium: {
+            DataType: "String",
+            StringValue: isPremiumBatch ? "true" : "false",
+          },
+          productCount: {
+            DataType: "Number",
+            StringValue: products.length.toString(),
+          },
+        },
       })
     );
 
     console.log(
-      `SNS notification sent successfully for ${products.length} products`
+      `SNS notification sent successfully for ${products.length} products (max price: $${maxPrice}, premium: ${isPremiumBatch})`
     );
   } catch (error) {
     console.error("Failed to send SNS notification:", error);
