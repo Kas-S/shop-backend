@@ -1,9 +1,13 @@
 import { S3Event } from "aws-lambda";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import { Readable } from "stream";
 import csv from "csv-parser";
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
+const sqsClient = new SQSClient({ region: process.env.AWS_REGION });
+
+const QUEUE_URL = process.env.QUEUE_URL!;
 
 export const handler = async (event: S3Event): Promise<void> => {
   console.log("ImportFileParser event:", JSON.stringify(event, null, 2));
@@ -35,17 +39,39 @@ export const handler = async (event: S3Event): Promise<void> => {
       const stream = response.Body as Readable;
 
       let recordCount = 0;
+      let sentCount = 0;
 
       await new Promise<void>((resolve, reject) => {
-        stream
-          .pipe(csv())
+        const parser = stream.pipe(csv());
+        const promises: Promise<void>[] = [];
+
+        parser
           .on("data", (data) => {
             recordCount++;
-            console.log(`Record ${recordCount}:`, JSON.stringify(data));
+            const sendPromise = sqsClient
+              .send(
+                new SendMessageCommand({
+                  QueueUrl: QUEUE_URL,
+                  MessageBody: JSON.stringify(data),
+                })
+              )
+              .then(() => {
+                sentCount++;
+                console.log(`Record ${recordCount} sent to SQS successfully`);
+              })
+              .catch((error) => {
+                console.error(
+                  `Error sending record ${recordCount} to SQS:`,
+                  error
+                );
+              });
+
+            promises.push(sendPromise);
           })
-          .on("end", () => {
+          .on("end", async () => {
+            await Promise.all(promises);
             console.log(
-              `Finished processing ${key}. Total records: ${recordCount}`
+              `Finished processing ${key}. Total records: ${recordCount}, Sent to SQS: ${sentCount}`
             );
             resolve();
           })
