@@ -8,7 +8,7 @@ export const handler = async (
   try {
     const path = event.path;
     const headers = {
-      "Access-Control-Allow-Origin": "https://d28jittyj3mhp8.cloudfront.net",
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
     };

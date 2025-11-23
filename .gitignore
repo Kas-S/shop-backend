@@ -1,6 +1,6 @@
-*.js
-!jest.config.js
-*.d.ts
+# Compiled output
+dist/
+
 node_modules
 
 # CDK asset staging directory

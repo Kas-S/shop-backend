@@ -2,16 +2,19 @@
   "name": "shop-backend",
   "version": "0.1.0",
   "bin": {
-    "shop-backend": "bin/shop-backend.js"
+    "shop-backend": "dist/bin/shop-backend.js"
   },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
     "test": "jest",
     "cdk": "cdk",
     "populate-db": "ts-node scripts/populate-dynamodb.ts",
     "populate-db:batch": "ts-node scripts/populate-dynamodb.ts --batch",
-    "send-to-queue": "ts-node scripts/send-to-queue.ts"
+    "send-to-queue": "ts-node scripts/send-to-queue.ts",
+    "test-authorizer": "ts-node scripts/test-authorizer.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

@@ -16,7 +16,6 @@ const sqsClient = new SQSClient({
   region: process.env.AWS_REGION || "us-east-1",
 });
 
-// Update this with your queue URL after deployment
 const QUEUE_URL = process.env.QUEUE_URL || "YOUR_QUEUE_URL_HERE";
 
 const sampleProducts = [

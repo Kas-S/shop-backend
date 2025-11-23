@@ -2,7 +2,6 @@ import { SQSEvent, SQSRecord } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
-  PutCommand,
   TransactWriteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
@@ -36,7 +35,6 @@ function parseProductData(data: any): ProductMessage {
     throw new Error("Product description must be a string");
   }
 
-  // Parse price - handle both string and number types
   let price: number;
   if (typeof data.price === "number") {
     price = data.price;
@@ -50,7 +48,6 @@ function parseProductData(data: any): ProductMessage {
     throw new Error("Product price must be a positive number");
   }
 
-  // Parse count - handle both string and number types
   let count: number | undefined;
   if (data.count !== undefined && data.count !== null && data.count !== "") {
     if (typeof data.count === "number") {
@@ -215,7 +212,6 @@ Total products created: ${products.length}
 This is an automated notification from the Product Catalog Service.
   `.trim();
 
-  // Calculate the maximum price in this batch for filtering
   const maxPrice = Math.max(...products.map((p) => p.price));
   const isPremiumBatch = maxPrice > 100;
 
@@ -247,6 +243,5 @@ This is an automated notification from the Product Catalog Service.
     );
   } catch (error) {
     console.error("Failed to send SNS notification:", error);
-    // Don't throw error - we don't want to fail the Lambda if notification fails
   }
 }

@@ -4,11 +4,12 @@ This is a serverless e-commerce backend built with AWS CDK and TypeScript.
 
 ## Architecture
 
-The application consists of three main stacks:
+The application consists of four main stacks:
 
 1. **ProductServiceStack** - Product catalog with DynamoDB, API Gateway, and Lambda functions
 2. **ImportServiceStack** - CSV import service with S3, SQS integration
-3. **ShopBackendStack** - Base infrastructure stack
+3. **AuthorizationServiceStack** - Basic Authentication service for API Gateway
+4. **ShopBackendStack** - Base infrastructure stack
 
 ### Key Features
 
@@ -17,6 +18,7 @@ The application consists of three main stacks:
 - 📨 **Batch Processing**: SQS-based batch processing (5 products at a time)
 - 📧 **Email Notifications**: SNS notifications when products are created
 - 🔒 **Secure Uploads**: Pre-signed S3 URLs for file uploads
+- 🔐 **Basic Authentication**: Lambda authorizer for API Gateway endpoints
 - 📊 **NoSQL Database**: DynamoDB for products and stock tables
 - 🚀 **Serverless**: Lambda functions with Node.js 20.x runtime
 
@@ -47,29 +49,55 @@ npm run build
 cdk deploy --all
 
 # Or deploy individually
+cdk deploy AuthorizationServiceStack
 cdk deploy ProductServiceStack
 cdk deploy ImportServiceStack
 ```
+
+## Authentication
+
+The Authorization Service provides Basic Authentication for protected endpoints.
+
+**Default Test Credentials:**
+
+- Username: `kas-s` (GitHub account name)
+- Password: `TEST_PASSWORD`
+
+**Usage Example:**
+
+```bash
+# Create base64 token
+echo -n 'kas-s:TEST_PASSWORD' | base64
+# Result: a2FzLXM6VEVTVF9QQVNTV09SRA==
+
+# Use in API request
+curl -H "Authorization: Basic a2FzLXM6VEVTVF9QQVNTV09SRA==" \
+  https://YOUR_API_URL/protected-endpoint
+```
+
+See [AUTHORIZATION-SERVICE.md](./docs/AUTHORIZATION-SERVICE.md) for detailed documentation.
 
 ## Testing with Sample Data
 
 We provide several sample CSV files for testing:
 
-| File | Products | Category | Use Case |
-|------|----------|----------|----------|
-| `sample-products.csv` | 10 | Tech/Electronics | Standard testing |
-| `sample-products-small.csv` | 5 | Mobile Devices | Quick test (1 batch) |
-| `sample-products-office.csv` | 15 | Office Supplies | Larger import (3 batches) |
-| `sample-products-fitness.csv` | 15 | Fitness Equipment | Category variety testing |
+| File                          | Products | Category          | Use Case                  |
+| ----------------------------- | -------- | ----------------- | ------------------------- |
+| `sample-products.csv`         | 10       | Tech/Electronics  | Standard testing          |
+| `sample-products-small.csv`   | 5        | Mobile Devices    | Quick test (1 batch)      |
+| `sample-products-office.csv`  | 15       | Office Supplies   | Larger import (3 batches) |
+| `sample-products-fitness.csv` | 15       | Fitness Equipment | Category variety testing  |
 
 ### Upload a Sample CSV
 
 1. Get a signed URL:
+
 ```bash
 curl "https://YOUR_IMPORT_API_URL/import?name=sample-products.csv"
 ```
 
 2. Upload the file:
+
 ```bash
 curl -X PUT \
   -H "Content-Type: text/csv" \
@@ -118,11 +146,13 @@ See [SAMPLE-CSV-USAGE.md](./docs/SAMPLE-CSV-USAGE.md) for detailed usage instruc
 ## Environment Variables
 
 ### ProductServiceStack Lambdas
+
 - `PRODUCTS_TABLE_NAME` - DynamoDB products table name
 - `STOCK_TABLE_NAME` - DynamoDB stock table name
 - `SNS_TOPIC_ARN` - SNS topic for product creation notifications
 
 ### ImportServiceStack Lambdas
+
 - `BUCKET_NAME` - S3 bucket for CSV uploads
 - `QUEUE_URL` - SQS queue URL for catalog items
 
@@ -195,13 +225,13 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ## Useful commands
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
-* `npm run send-to-queue` - Send test messages to SQS queue
+- `npm run build` compile typescript to js
+- `npm run watch` watch for changes and compile
+- `npm run test` perform the jest unit tests
+- `npx cdk deploy` deploy this stack to your default AWS account/region
+- `npx cdk diff` compare deployed stack with current state
+- `npx cdk synth` emits the synthesized CloudFormation template
+- `npm run send-to-queue` - Send test messages to SQS queue
 
 ## Cleanup
 

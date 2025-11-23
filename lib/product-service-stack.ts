@@ -13,8 +13,7 @@ const integrationsResponse = [
   {
     statusCode: "200",
     responseParameters: {
-      "method.response.header.Access-Control-Allow-Origin":
-        "'https://d28jittyj3mhp8.cloudfront.net'",
+      "method.response.header.Access-Control-Allow-Origin": "'*'",
       "method.response.header.Access-Control-Allow-Headers":
         "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
       "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'",
@@ -61,7 +60,9 @@ export class ProductServiceStack extends cdk.Stack {
         handler: "get-products-list/handler.handler",
         timeout: cdk.Duration.seconds(30),
         memorySize: 256,
-        code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
           STOCK_TABLE_NAME: stockTable.tableName,
@@ -78,7 +79,9 @@ export class ProductServiceStack extends cdk.Stack {
         handler: "get-products-by-id/handler.handler",
         timeout: cdk.Duration.seconds(30),
         memorySize: 256,
-        code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
           STOCK_TABLE_NAME: stockTable.tableName,
@@ -95,7 +98,9 @@ export class ProductServiceStack extends cdk.Stack {
         handler: "create-product/handler.handler",
         timeout: cdk.Duration.seconds(30),
         memorySize: 256,
-        code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
           STOCK_TABLE_NAME: stockTable.tableName,
@@ -109,7 +114,7 @@ export class ProductServiceStack extends cdk.Stack {
       handler: "swagger/handler.handler",
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
-      code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+      code: lambda.Code.fromAsset(path.join(__dirname, "../dist/lib/lambdas")),
     });
 
     productsTable.grantReadWriteData(getProductsListLambda);
@@ -153,7 +158,9 @@ export class ProductServiceStack extends cdk.Stack {
         handler: "catalog-batch-process/handler.handler",
         timeout: cdk.Duration.seconds(30),
         memorySize: 256,
-        code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
         environment: {
           PRODUCTS_TABLE_NAME: productsTable.tableName,
           STOCK_TABLE_NAME: stockTable.tableName,

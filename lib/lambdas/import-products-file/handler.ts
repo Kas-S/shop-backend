@@ -19,6 +19,9 @@ export const handler = async (
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers":
+            "Content-Type,X-Amz-Date,Authorization,X-Api-Key",
+          "Access-Control-Allow-Methods": "GET,OPTIONS",
         },
         body: JSON.stringify({
           message: "Missing required query parameter: name",
@@ -32,6 +35,9 @@ export const handler = async (
         headers: {
           "Content-Type": "application/json",
           "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers":
+            "Content-Type,X-Amz-Date,Authorization,X-Api-Key",
+          "Access-Control-Allow-Methods": "GET,OPTIONS",
         },
         body: JSON.stringify({
           message: "File must be a CSV file",
@@ -56,6 +62,9 @@ export const handler = async (
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers":
+          "Content-Type,X-Amz-Date,Authorization,X-Api-Key",
+        "Access-Control-Allow-Methods": "GET,OPTIONS",
       },
       body: JSON.stringify({
         signedUrl,
@@ -69,6 +78,9 @@ export const handler = async (
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers":
+          "Content-Type,X-Amz-Date,Authorization,X-Api-Key",
+        "Access-Control-Allow-Methods": "GET,OPTIONS",
       },
       body: JSON.stringify({ message: "Internal server error" }),
     };
