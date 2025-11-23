@@ -3,6 +3,7 @@ import * as cdk from "aws-cdk-lib";
 import { ShopBackendStack } from "../lib/shop-backend-stack";
 import { ProductServiceStack } from "../lib/product-service-stack";
 import { ImportServiceStack } from "../lib/import-service-stack";
+import { AuthorizationServiceStack } from "../lib/authorization-service-stack";
 
 const app = new cdk.App();
 new ShopBackendStack(app, "ShopBackendStack", {
@@ -17,6 +18,11 @@ new ShopBackendStack(app, "ShopBackendStack", {
   // env: { account: '123456789012', region: 'us-east-1' },
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
+
+const authorizationServiceStack = new AuthorizationServiceStack(
+  app,
+  "AuthorizationServiceStack"
+);
 
 const productServiceStack = new ProductServiceStack(app, "ProductServiceStack");
 new ImportServiceStack(app, "ImportServiceStack", {

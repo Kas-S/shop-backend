@@ -15,6 +15,26 @@ export interface ImportServiceStackProps extends cdk.StackProps {
 export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ImportServiceStackProps) {
     super(scope, id, props);
+
+    const basicAuthorizerLambda = new lambda.Function(
+      this,
+      "BasicAuthorizerFunction",
+      {
+        runtime: lambda.Runtime.NODEJS_20_X,
+        handler: "basic-authorizer/handler.handler",
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
+        environment: {
+          kas_s: "TEST_PASSWORD",
+          AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
+        },
+        description: "Basic Authorization Lambda for Import API Gateway",
+      }
+    );
+
     const bucket = new s3.Bucket(this, "products", {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -47,7 +67,9 @@ export class ImportServiceStack extends cdk.Stack {
         handler: "import-products-file/handler.handler",
         timeout: cdk.Duration.seconds(30),
         memorySize: 256,
-        code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
         environment: {
           BUCKET_NAME: bucket.bucketName,
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
@@ -66,7 +88,9 @@ export class ImportServiceStack extends cdk.Stack {
         handler: "import-file-parser/handler.handler",
         timeout: cdk.Duration.seconds(30),
         memorySize: 256,
-        code: lambda.Code.fromAsset(path.join(__dirname, "lambdas")),
+        code: lambda.Code.fromAsset(
+          path.join(__dirname, "../dist/lib/lambdas")
+        ),
         environment: {
           QUEUE_URL: props.catalogItemsQueue.queueUrl,
           AWS_NODEJS_CONNECTION_REUSE_ENABLED: "1",
@@ -93,6 +117,13 @@ export class ImportServiceStack extends cdk.Stack {
       },
     });
 
+    const authorizer = new apigateway.TokenAuthorizer(this, "BasicAuthorizer", {
+      handler: basicAuthorizerLambda,
+      identitySource: "method.request.header.Authorization",
+      authorizerName: "BasicAuthorizer",
+      resultsCacheTtl: cdk.Duration.seconds(0),
+    });
+
     const importResource = api.root.addResource("import");
 
     importResource.addMethod(
@@ -103,16 +134,24 @@ export class ImportServiceStack extends cdk.Stack {
             statusCode: "200",
             responseParameters: {
               "method.response.header.Access-Control-Allow-Origin": "'*'",
+              "method.response.header.Access-Control-Allow-Headers":
+                "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
+              "method.response.header.Access-Control-Allow-Methods":
+                "'GET,OPTIONS'",
             },
           },
         ],
       }),
       {
+        authorizer: authorizer,
+        authorizationType: apigateway.AuthorizationType.CUSTOM,
         methodResponses: [
           {
             statusCode: "200",
             responseParameters: {
               "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
             },
           },
         ],
@@ -137,6 +176,11 @@ export class ImportServiceStack extends cdk.Stack {
     new cdk.CfnOutput(this, "BucketName", {
       value: bucket.bucketName,
       description: "S3 Bucket for product imports",
+    });
+
+    new cdk.CfnOutput(this, "BasicAuthorizerFunctionName", {
+      value: basicAuthorizerLambda.functionName,
+      description: "Lambda function that authorizes import API requests",
     });
   }
 }
